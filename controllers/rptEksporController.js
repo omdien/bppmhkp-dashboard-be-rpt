@@ -2,8 +2,23 @@ import Tr_report_ekspor from "../models/tr_report_ekspor.js";
 import { Sequelize } from "sequelize";
 import ExcelJS from "exceljs";
 
+const Op = Sequelize.Op;
+
+// Utility: Format Date Time
+const formatDateTime = (date) => {
+    if (!date || isNaN(new Date(date))) return "-";
+    const d = new Date(date);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(
+        d.getHours()
+    )}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
+
+// =======================
+// Controller Functions
+// =======================
+
 export const getAllReportEkspor = async (req, res) => {
-    const Op = Sequelize.Op;
     const { kdUpt } = req.params;
     const { page = 1, limit = 20, tglAwal, tglAkhir } = req.query;
 
@@ -11,16 +26,21 @@ export const getAllReportEkspor = async (req, res) => {
     const perPage = parseInt(limit);
 
     try {
-        // Cek jika kode_upt termasuk dalam yang bisa melihat semua data
         const uptSemua = ["00.1", "00.2", "00.3", "00.4"];
-        const whereClause = {
-            ...(uptSemua.includes(kdUpt) ? {} : { kode_upt: { [Op.like]: `%${kdUpt}%` } }),
-            ...(tglAwal && tglAkhir && {
-                tanggal_smkhp: {
-                    [Op.between]: [new Date(tglAwal), new Date(tglAkhir)]
-                }
-            })
-        };
+
+        let whereClause = {};
+        if (!uptSemua.includes(kdUpt)) {
+            whereClause.kode_upt = { [Op.like]: `%${kdUpt}%` };
+        }
+
+        if (tglAwal && tglAkhir) {
+            const start = new Date(tglAwal);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(tglAkhir);
+            end.setHours(23, 59, 59, 999);
+
+            whereClause.tanggal_smkhp = { [Op.between]: [start, end] };
+        }
 
         const { rows, count } = await Tr_report_ekspor.findAndCountAll({
             attributes: [
@@ -52,16 +72,16 @@ export const getAllReportEkspor = async (req, res) => {
                 "kurs_usd",
                 "cara_angkut",
                 "alat_angkut",
-                "voyage"
+                "voyage",
             ],
             where: whereClause,
             offset,
-            limit: perPage
+            limit: perPage,
         });
 
-        const result = rows.map(item => {
+        const result = rows.map((item) => {
             const plain = item.get({ plain: true });
-            plain.nilai_dolar = (plain.nilai_rupiah || 0) / (plain.kurs_usd || 0);
+            plain.nilai_dolar = (plain.nilai_rupiah || 0) / (plain.kurs_usd || 1);
             return plain;
         });
 
@@ -69,56 +89,73 @@ export const getAllReportEkspor = async (req, res) => {
             data: result,
             totalRecords: count,
             currentPage: parseInt(page),
-            totalPages: Math.ceil(count / perPage)
+            totalPages: Math.ceil(count / perPage),
         });
-
     } catch (error) {
         console.error("Error fetching data:", error);
         res.status(500).json({ message: "Gagal mengambil data", error });
     }
 };
 
-// Fungsi Format Date Time
-const formatDateTime = (date) => {
-    if (!date || isNaN(new Date(date))) return "-";
-    const d = new Date(date);
-    const pad = (n) => String(n).padStart(2, '0');
-    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-};
-
 export const getAllReportEksporToExcell = async (req, res) => {
-    const Op = Sequelize.Op;
     const { kdUpt } = req.params;
     const { tglAwal, tglAkhir } = req.query;
     const dateFields = ["tanggal_aju", "tanggal_berangkat", "tanggal_smkhp"];
 
     try {
         const uptSemua = ["00.1", "00.2", "00.3", "00.4"];
-        const whereClause = {
-            ...(uptSemua.includes(kdUpt) ? {} : { kode_upt: { [Op.like]: `%${kdUpt}%` } }),
-            ...(tglAwal && tglAkhir && {
-                tanggal_smkhp: {
-                    [Op.between]: [new Date(tglAwal), new Date(tglAkhir)]
-                }
-            })
-        };
+        let whereClause = {};
+        if (!uptSemua.includes(kdUpt)) {
+            whereClause.kode_upt = { [Op.like]: `%${kdUpt}%` };
+        }
+
+        if (tglAwal && tglAkhir) {
+            const start = new Date(tglAwal);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(tglAkhir);
+            end.setHours(23, 59, 59, 999);
+
+            whereClause.tanggal_smkhp = { [Op.between]: [start, end] };
+        }
 
         const rows = await Tr_report_ekspor.findAll({
             attributes: [
-                "nomor_aju", "tanggal_aju", "tanggal_berangkat", "no_hc", "tanggal_smkhp",
-                "nama_upt", "nama_trader", "alamat_trader", "nama_upi", "alamat_upi",
-                "nama_partner", "alamat_partner", "ket_bentuk", "pel_asal", "pel_muat",
-                "negara_tujuan", "pel_bongkar", "hscode", "kel_ikan", "nm_dagang",
-                "nm_latin", "netto", "jumlah", "satuan", "nilai_rupiah", "kurs_usd",
-                "cara_angkut", "alat_angkut", "voyage"
+                "nomor_aju",
+                "tanggal_aju",
+                "tanggal_berangkat",
+                "no_hc",
+                "tanggal_smkhp",
+                "nama_upt",
+                "nama_trader",
+                "alamat_trader",
+                "nama_upi",
+                "alamat_upi",
+                "nama_partner",
+                "alamat_partner",
+                "ket_bentuk",
+                "pel_asal",
+                "pel_muat",
+                "negara_tujuan",
+                "pel_bongkar",
+                "hscode",
+                "kel_ikan",
+                "nm_dagang",
+                "nm_latin",
+                "netto",
+                "jumlah",
+                "satuan",
+                "nilai_rupiah",
+                "kurs_usd",
+                "cara_angkut",
+                "alat_angkut",
+                "voyage",
             ],
-            where: whereClause
+            where: whereClause,
         });
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Report Ekspor");
 
-        // Tambahkan objek pemetaan nama field ke label header:
         const headerAliases = {
             nomor_aju: "NOMOR AJU",
             tanggal_aju: "TGL AJU",
@@ -149,43 +186,41 @@ export const getAllReportEksporToExcell = async (req, res) => {
             nilai_dolar: "USD",
             cara_angkut: "ANGKUT",
             alat_angkut: "ALAT",
-            voyage: "VOYAGE"
+            voyage: "VOYAGE",
         };
 
-        // Header
         const sample = rows[0]?.get({ plain: true });
         const headers = sample ? Object.keys(sample).concat("nilai_dolar") : [];
-
-        const displayHeaders = headers.map((key) => headerAliases[key] || key.toUpperCase());
+        const displayHeaders = headers.map(
+            (key) => headerAliases[key] || key.toUpperCase()
+        );
 
         worksheet.addRow(["#", ...displayHeaders]);
-
-        // Buat header bold
         const headerRow = worksheet.getRow(1);
         headerRow.font = { bold: true };
 
-        // Data
         rows.forEach((item, index) => {
             const plain = item.get({ plain: true });
-
-            // Hitung nilai_dolar
             plain.nilai_dolar = (plain.nilai_rupiah || 0) / (plain.kurs_usd || 1);
 
-            // Format tanggal
             headers.forEach((key) => {
                 if (dateFields.includes(key)) {
                     plain[key] = formatDateTime(plain[key]);
                 }
             });
 
-            // Buat baris
-            const values = headers.map(key => plain[key]);
+            const values = headers.map((key) => plain[key]);
             worksheet.addRow([index + 1, ...values]);
         });
 
-        // Set header response
-        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        res.setHeader("Content-Disposition", "attachment; filename=report_ekspor.xlsx");
+        res.setHeader(
+            "Content-Type",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        res.setHeader(
+            "Content-Disposition",
+            "attachment; filename=report_ekspor.xlsx"
+        );
 
         await workbook.xlsx.write(res);
         res.end();
@@ -196,12 +231,11 @@ export const getAllReportEksporToExcell = async (req, res) => {
 };
 
 export const getAllReportEksporNormal = async (req, res) => {
-    const Op = Sequelize.Op;
     const { tgl_awal, tgl_akhir, nomor_aju } = req.query;
     const { kdUpt } = req.params;
 
-    const whereClause = {
-        kode_upt: { [Op.like]: `%${kdUpt}%` }
+    let whereClause = {
+        kode_upt: { [Op.like]: `%${kdUpt}%` },
     };
 
     if (nomor_aju) {
@@ -209,9 +243,12 @@ export const getAllReportEksporNormal = async (req, res) => {
     }
 
     if (tgl_awal && tgl_akhir) {
-        whereClause.tanggal_aju = {
-            [Op.between]: [new Date(tgl_awal), new Date(tgl_akhir)]
-        };
+        const start = new Date(tgl_awal);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(tgl_akhir);
+        end.setHours(23, 59, 59, 999);
+
+        whereClause.tanggal_aju = { [Op.between]: [start, end] };
     }
 
     try {
@@ -245,16 +282,15 @@ export const getAllReportEksporNormal = async (req, res) => {
                 "kurs_usd",
                 "cara_angkut",
                 "alat_angkut",
-                "voyage"
+                "voyage",
             ],
             where: whereClause,
-            order: [["tanggal_aju", "DESC"]]
+            order: [["tanggal_aju", "DESC"]],
         });
 
-        // Normalisasi hasil berdasarkan nomor_aju
         const grouped = {};
 
-        data.forEach(item => {
+        data.forEach((item) => {
             const row = item.get({ plain: true });
 
             if (!grouped[row.nomor_aju]) {
@@ -279,7 +315,7 @@ export const getAllReportEksporNormal = async (req, res) => {
                     cara_angkut: row.cara_angkut,
                     alat_angkut: row.alat_angkut,
                     voyage: row.voyage,
-                    detail: []
+                    detail: [],
                 };
             }
 
@@ -293,7 +329,7 @@ export const getAllReportEksporNormal = async (req, res) => {
                 satuan: row.satuan,
                 nilai_rupiah: row.nilai_rupiah,
                 kurs_usd: row.kurs_usd,
-                nilai_dolar: (row.nilai_rupiah || 0) / (row.kurs_usd || 1)
+                nilai_dolar: (row.nilai_rupiah || 0) / (row.kurs_usd || 1),
             });
         });
 
@@ -305,20 +341,21 @@ export const getAllReportEksporNormal = async (req, res) => {
     }
 };
 
-
 export const exportReportEksporToExcel = async (req, res) => {
-    const Op = Sequelize.Op;
     const { tgl_awal, tgl_akhir } = req.query;
     const { kdUpt } = req.params;
 
-    const whereClause = {
-        kode_upt: { [Op.like]: `%${kdUpt}%` }
+    let whereClause = {
+        kode_upt: { [Op.like]: `%${kdUpt}%` },
     };
 
     if (tgl_awal && tgl_akhir) {
-        whereClause.tanggal_aju = {
-            [Op.between]: [new Date(tgl_awal), new Date(tgl_akhir)]
-        };
+        const start = new Date(tgl_awal);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(tgl_akhir);
+        end.setHours(23, 59, 59, 999);
+
+        whereClause.tanggal_aju = { [Op.between]: [start, end] };
     }
 
     try {
@@ -328,7 +365,7 @@ export const exportReportEksporToExcel = async (req, res) => {
         });
 
         const grouped = {};
-        data.forEach(row => {
+        data.forEach((row) => {
             const plain = row.get({ plain: true });
 
             if (!grouped[plain.nomor_aju]) {
@@ -353,7 +390,7 @@ export const exportReportEksporToExcel = async (req, res) => {
                     cara_angkut: plain.cara_angkut,
                     alat_angkut: plain.alat_angkut,
                     voyage: plain.voyage,
-                    detail: []
+                    detail: [],
                 };
             }
 
@@ -367,23 +404,29 @@ export const exportReportEksporToExcel = async (req, res) => {
                 satuan: plain.satuan,
                 nilai_rupiah: plain.nilai_rupiah,
                 kurs_usd: plain.kurs_usd,
-                nilai_dolar: (plain.nilai_rupiah || 0) / (plain.kurs_usd || 1)
+                nilai_dolar: (plain.nilai_rupiah || 0) / (plain.kurs_usd || 1),
             });
         });
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Laporan Ekspor");
 
-        // Style util
         const headerStyle = {
             font: { bold: true },
-            fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFEFEF' } }
+            fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FFEFEFEF" } },
         };
 
         const detailHeader = [
-            "HS Code", "Kelompok Ikan", "Nama Dagang", "Nama Latin",
-            "Netto", "Jumlah", "Satuan",
-            "Nilai Rupiah", "Kurs USD", "Nilai Dolar"
+            "HS Code",
+            "Kelompok Ikan",
+            "Nama Dagang",
+            "Nama Latin",
+            "Netto",
+            "Jumlah",
+            "Satuan",
+            "Nilai Rupiah",
+            "Kurs USD",
+            "Nilai Dolar",
         ];
 
         let currentRow = 1;
@@ -392,40 +435,61 @@ export const exportReportEksporToExcel = async (req, res) => {
             const entry = grouped[nomor_aju];
 
             const infoRows = [
-                ["Nomor Aju", entry.nomor_aju, "Tanggal Aju", entry.tanggal_aju, "Tanggal Berangkat", entry.tanggal_berangkat],
+                [
+                    "Nomor Aju",
+                    entry.nomor_aju,
+                    "Tanggal Aju",
+                    entry.tanggal_aju,
+                    "Tanggal Berangkat",
+                    entry.tanggal_berangkat,
+                ],
                 ["No HC", entry.no_hc, "Tanggal SMKHP", entry.tanggal_smkhp],
                 ["Nama UPT", entry.nama_upt, "Nama Trader", entry.nama_trader],
                 ["Alamat Trader", entry.alamat_trader],
                 ["Nama UPI", entry.nama_upi, "Alamat UPI", entry.alamat_upi],
                 ["Nama Partner", entry.nama_partner, "Alamat Partner", entry.alamat_partner],
-                ["Ket Bentuk", entry.ket_bentuk, "Pel Asal", entry.pel_asal, "Pel Muat", entry.pel_muat],
+                [
+                    "Ket Bentuk",
+                    entry.ket_bentuk,
+                    "Pel Asal",
+                    entry.pel_asal,
+                    "Pel Muat",
+                    entry.pel_muat,
+                ],
                 ["Negara Tujuan", entry.negara_tujuan, "Pel Bongkar", entry.pel_bongkar],
-                ["Cara Angkut", entry.cara_angkut, "Alat Angkut", entry.alat_angkut, "Voyage", entry.voyage]
+                [
+                    "Cara Angkut",
+                    entry.cara_angkut,
+                    "Alat Angkut",
+                    entry.alat_angkut,
+                    "Voyage",
+                    entry.voyage,
+                ],
             ];
 
-            infoRows.forEach(row => {
+            infoRows.forEach((row) => {
                 const newRow = worksheet.addRow(row);
                 newRow.eachCell((cell, colNumber) => {
-                    if (colNumber % 2 === 1) { // Kolom 1, 3, 5 dst = label
+                    if (colNumber % 2 === 1) {
                         cell.font = { bold: true };
                     }
                 });
                 currentRow++;
             });
 
-            worksheet.addRow([]); currentRow++;
+            worksheet.addRow([]);
+            currentRow++;
 
-            // Add detail header
             const headerRow = worksheet.addRow(detailHeader);
-            headerRow.eachCell(cell => {
+            headerRow.eachCell((cell) => {
                 cell.style = headerStyle;
                 cell.border = {
-                    bottom: { style: "thin" }
+                    bottom: { style: "thin" },
                 };
             });
             currentRow++;
 
-            entry.detail.forEach(d => {
+            entry.detail.forEach((d) => {
                 const row = worksheet.addRow([
                     d.hscode,
                     d.kel_ikan,
@@ -436,15 +500,16 @@ export const exportReportEksporToExcel = async (req, res) => {
                     d.satuan,
                     d.nilai_rupiah,
                     d.kurs_usd,
-                    d.nilai_dolar
+                    d.nilai_dolar,
                 ]);
-                row.eachCell(cell => {
-                    cell.border = { bottom: { style: "thin" } };
+                row.eachCell((cell) => {
+                    cell.border = { bottom: { style: "hair" } };
                 });
                 currentRow++;
             });
 
-            worksheet.addRow([]); currentRow++;
+            worksheet.addRow([]);
+            currentRow++;
         }
 
         res.setHeader(
@@ -453,14 +518,13 @@ export const exportReportEksporToExcel = async (req, res) => {
         );
         res.setHeader(
             "Content-Disposition",
-            `attachment; filename=laporan_ekspor_normal_${kdUpt}.xlsx`
+            "attachment; filename=laporan_ekspor.xlsx"
         );
 
         await workbook.xlsx.write(res);
         res.end();
-
     } catch (error) {
-        console.error("Gagal ekspor:", error);
-        res.status(500).json({ message: "Gagal ekspor", error });
+        console.error("Gagal ekspor Excel:", error);
+        res.status(500).json({ message: "Gagal ekspor Excel", error });
     }
 };
