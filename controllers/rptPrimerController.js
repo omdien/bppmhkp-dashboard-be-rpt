@@ -1,11 +1,11 @@
 import { Sequelize } from "sequelize";
 import { db_mutu } from "../config/Database.js";
-import Tb_propinsi from "../models/tb_propinsi.js";
-import Tr_oss_checklist from "../models/tr_oss_checklist.js";
-import Tr_pbumku_laporan_header from "../models/tr_pbumku_laporan_header.js";
-import Tr_pbumku_laporan_file from "../models/tr_pbumku_laporan_file.js";
-import Tr_pbumku_laporan_lampiran from "../models/tr_pbumku_laporan_lampiran.js";
-import V_oss_header from "../models/v_oss_header.js";
+import Tb_propinsi from "../models/primer/tb_propinsi.js";
+import Tr_oss_checklist from "../models/primer/tr_oss_checklist.js";
+import Tr_pbumku_laporan_header from "../models/primer/tr_pbumku_laporan_header.js";
+import Tr_pbumku_laporan_file from "../models/primer/tr_pbumku_laporan_file.js";
+import Tr_pbumku_laporan_lampiran from "../models/primer/tr_pbumku_laporan_lampiran.js";
+import V_oss_header from "../models/primer/v_oss_header.js";
 import ExcelJS from "exceljs";
 
 export const getTr_oss_checklist_propinsi_izin_tabel = async (req, res) => {

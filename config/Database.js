@@ -18,3 +18,9 @@ export const db_mutu = new Sequelize(process.env.DB_NAME_MUTU, process.env.DB_US
     dialect: 'mysql',
     timezone: '+07:00'
 });
+
+export const db_pnbp = new Sequelize(process.env.DB_NAME_PNBP, process.env.DB_USER, process.env.DB_PASS, {
+    host: process.env.DB_HOST,
+    dialect: 'mysql',
+    timezone: '+07:00'
+});

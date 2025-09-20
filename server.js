@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import rptEksporRoute from "./routes/report-ekspor.js";
 import rptPrimerRoute from "./routes/report-primer.js";
+import rptSKPRoute from "./routes/report-skp.js";
+import rptPNBProute from "./routes/report-pnbp.js";
 import { verifyToken } from "./middleware/auth.js";
 import cookieParser from "cookie-parser";
 
@@ -21,8 +23,10 @@ app.use(cors({
 
 app.use(express.json());
 
-app.use("/api/report/ekspor",verifyToken, rptEksporRoute);
-app.use("/api/report/primer",verifyToken, rptPrimerRoute);
+app.use("/api/report/ekspor", verifyToken, rptEksporRoute);
+app.use("/api/report/primer", verifyToken, rptPrimerRoute);
+app.use("/api/report/skp", verifyToken, rptSKPRoute);
+app.use("/api/report/pnbp", verifyToken, rptPNBProute);
 
 const PORT = process.env.PORT || 5005;
 app.listen(PORT, () => {

@@ -1,14 +1,12 @@
 import { Sequelize } from "sequelize";
-import db from "../config/Database.js";
-import Tb_skala_usaha_skp from "./tb_skala_usaha_skp.js";
-
+import db from "../../config/Database.js";
 
 const { DataTypes } = Sequelize;
 
-const Tr_oss_proyek = db.define(
-  "tr_oss_proyek",
+const Tr_oss_header = db.define(
+  "tr_oss_header",
   {
-    idpryk: {
+    idoss: {
       autoIncrement: true,
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
@@ -19,192 +17,100 @@ const Tr_oss_proyek = db.define(
       allowNull: false,
       defaultValue: ""
     },
-    id_proyek: {
-      type: DataTypes.STRING(23),
-      allowNull: false,
-      defaultValue: ""
-    },
-    nomor_proyek: {
-      type: DataTypes.STRING(25),
-      allowNull: false,
-      defaultValue: ""
-    },
-    uraian_usaha: {
-      type: DataTypes.STRING(155),
-      allowNull: false,
-      defaultValue: ""
-    },
-    jumlah_tki_l: {
+    tgl_pengajuan_nib: {
       type: DataTypes.STRING(10),
-      allowNull: false,
-      defaultValue: "0"
+      allowNull: true
     },
-    jumlah_tki_p: {
+    tgl_terbit_nib: {
       type: DataTypes.STRING(10),
-      allowNull: false,
-      defaultValue: "0"
+      allowNull: true
     },
-    jumlah_tka_l: {
+    tgl_perubahan_nib: {
       type: DataTypes.STRING(10),
-      allowNull: false,
-      defaultValue: "0"
+      allowNull: true
     },
-    jumlah_tka_p: {
-      type: DataTypes.STRING(10),
-      allowNull: false,
-      defaultValue: "0"
-    },
-    kbli: {
-      type: DataTypes.STRING(8),
-      allowNull: false,
-      defaultValue: ""
-    },
-    sektor: {
-      type: DataTypes.STRING(3),
-      allowNull: false,
-      defaultValue: ""
-    },
-    memiliki_menguasai: {
-      type: DataTypes.STRING(1),
-      allowNull: false,
-      defaultValue: ""
-    },
-    jenis_lokasi: {
-      type: DataTypes.STRING(3),
-      allowNull: false,
-      defaultValue: ""
-    },
-    status_tanah: {
-      type: DataTypes.STRING(3),
-      allowNull: false,
-      defaultValue: ""
-    },
-    luas_tanah: {
+    oss_id: {
       type: DataTypes.STRING(50),
       allowNull: false,
       defaultValue: ""
     },
-    satuan_luas_tanah: {
-      type: DataTypes.STRING(2),
+    jenis_pelaku_usaha: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: false,
+      defaultValue: 0
+    },
+    no_npp: {
+      type: DataTypes.STRING(10),
       allowNull: false,
       defaultValue: ""
     },
-    pembelian_pematang_tanah: {
-      type: DataTypes.CHAR(15),
-      allowNull: false,
-      defaultValue: "0"
-    },
-    bangunan_gedung: {
-      type: DataTypes.CHAR(15),
-      allowNull: false,
-      defaultValue: "0"
-    },
-    mesin_peralatan: {
-      type: DataTypes.CHAR(15),
-      allowNull: false,
-      defaultValue: "0"
-    },
-    mesin_peralatan_usd: {
-      type: DataTypes.CHAR(15),
-      allowNull: false,
-      defaultValue: "0"
-    },
-    investasi_lain: {
-      type: DataTypes.CHAR(15),
-      allowNull: false,
-      defaultValue: "0"
-    },
-    sub_jumlah: {
-      type: DataTypes.CHAR(15),
-      allowNull: false,
-      defaultValue: "0"
-    },
-    modal_kerja: {
-      type: DataTypes.CHAR(15),
-      allowNull: false,
-      defaultValue: "0"
-    },
-    jumlah_investasi: {
-      type: DataTypes.CHAR(15),
-      allowNull: false,
-      defaultValue: "0"
-    },
-    tanggal_kurs: {
-      type: DataTypes.STRING(20),
-      allowNull: true
-    },
-    nilai_kurs: {
-      type: DataTypes.CHAR(15),
-      allowNull: false,
-      defaultValue: "0"
-    },
-    kd_kawasan: {
-      type: DataTypes.CHAR(15),
-      allowNull: false,
-      defaultValue: "0"
-    },
-    flag_perluasan: {
-      type: DataTypes.STRING(1),
-      allowNull: false,
-      defaultValue: ""
-    },
-    flag_cabang: {
-      type: DataTypes.STRING(1),
-      allowNull: false,
-      defaultValue: ""
-    },
-    npwp_cabang: {
+    no_va: {
       type: DataTypes.STRING(16),
       allowNull: false,
       defaultValue: ""
     },
-    nama_cabang: {
-      type: DataTypes.STRING(150),
+    no_wlkp: {
+      type: DataTypes.STRING(22),
       allowNull: false,
       defaultValue: ""
     },
-    jenis_identitas_pj: {
-      type: DataTypes.STRING(2),
-      allowNull: false,
-      defaultValue: ""
-    },
-    no_identitas_pj: {
-      type: DataTypes.STRING(25),
-      allowNull: false,
-      defaultValue: ""
-    },
-    nama_pj: {
-      type: DataTypes.STRING(45),
-      allowNull: false,
-      defaultValue: ""
-    },
-    status_proyek: {
-      type: DataTypes.STRING(2),
-      allowNull: false,
-      defaultValue: ""
-    },
-    jenis_proyek: {
-      type: DataTypes.STRING(2),
-      allowNull: false,
-      defaultValue: ""
-    },
-    nama_kegiatan: {
-      type: DataTypes.STRING(115),
-      allowNull: false,
-      defaultValue: ""
-    },
-    flag_merger: {
+    flag_perusahaan: {
       type: DataTypes.STRING(1),
       allowNull: false,
       defaultValue: ""
     },
-    npwp_perseroan_merger: {
-      type: DataTypes.STRING(16),
+    flag_ekspor: {
+      type: DataTypes.STRING(1),
       allowNull: false,
       defaultValue: ""
     },
-    nama_perseroan_merger: {
-      type: DataTypes.STRING(45),
+    flag_impor: {
+      type: DataTypes.STRING(1),
+      allowNull: false,
+      defaultValue: ""
+    },
+    jenis_api: {
+      type: DataTypes.STRING(2),
+      allowNull: false,
+      defaultValue: ""
+    },
+    gabung_negara: {
+      type: DataTypes.STRING(1),
+      allowNull: false,
+      defaultValue: ""
+    },
+    negara_pma_dominan: {
+      type: DataTypes.STRING(2),
+      allowNull: false,
+      defaultValue: ""
+    },
+    total_pma: {
+      type: DataTypes.CHAR(15),
+      allowNull: false,
+      defaultValue: "0"
+    },
+    nilai_pma_dominan: {
+      type: DataTypes.CHAR(15),
+      allowNull: false,
+      defaultValue: "0"
+    },
+    nilai_pmdn: {
+      type: DataTypes.CHAR(15),
+      allowNull: false,
+      defaultValue: "0"
+    },
+    persen_pma: {
+      type: DataTypes.CHAR(15),
+      allowNull: false,
+      defaultValue: "0"
+    },
+    persen_pmdn: {
+      type: DataTypes.CHAR(15),
+      allowNull: false,
+      defaultValue: "0"
+    },
+    versi_pia: {
+      type: DataTypes.STRING(15),
       allowNull: false,
       defaultValue: ""
     },
@@ -213,20 +119,118 @@ const Tr_oss_proyek = db.define(
       allowNull: false,
       defaultValue: ""
     },
-    skala_resiko: {
+    jangka_waktu: {
+      type: DataTypes.STRING(15),
+      allowNull: true
+    },
+    status_badan_hukum: {
       type: DataTypes.STRING(2),
       allowNull: false,
       defaultValue: ""
     },
-    deskripsi_kegiatan: {
+    status_penanaman_modal: {
+      type: DataTypes.STRING(2),
+      allowNull: false,
+      defaultValue: ""
+    },
+    npwp_perseroan: {
+      type: DataTypes.STRING(16),
+      allowNull: false,
+      defaultValue: ""
+    },
+    nama_perseroan: {
       type: DataTypes.STRING(255),
       allowNull: false,
       defaultValue: ""
     },
-    flag_satu_lini: {
+    nama_singkatan: {
+      type: DataTypes.STRING(45),
+      allowNull: false,
+      defaultValue: ""
+    },
+    jenis_perseroan: {
+      type: DataTypes.STRING(2),
+      allowNull: false,
+      defaultValue: ""
+    },
+    status_perseroan: {
       type: DataTypes.STRING(1),
       allowNull: false,
       defaultValue: ""
+    },
+    alamat_perseroan: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      defaultValue: ""
+    },
+    rt_rw_perseroan: {
+      type: DataTypes.STRING(25),
+      allowNull: false,
+      defaultValue: ""
+    },
+    kelurahan_perseroan: {
+      type: DataTypes.STRING(25),
+      allowNull: false,
+      defaultValue: ""
+    },
+    perseroan_daerah_id: {
+      type: DataTypes.STRING(10),
+      allowNull: false,
+      defaultValue: ""
+    },
+    kode_pos_perseroan: {
+      type: DataTypes.STRING(5),
+      allowNull: false,
+      defaultValue: ""
+    },
+    nomor_telpon_perseroan: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: ""
+    },
+    email_perusahaan: {
+      type: DataTypes.STRING(45),
+      allowNull: false,
+      defaultValue: ""
+    },
+    dalam_bentuk_uang: {
+      type: DataTypes.CHAR(15),
+      allowNull: false,
+      defaultValue: "0"
+    },
+    dalam_bentuk_lain: {
+      type: DataTypes.STRING(15),
+      allowNull: false,
+      defaultValue: ""
+    },
+    total_modal_dasar: {
+      type: DataTypes.CHAR(15),
+      allowNull: false,
+      defaultValue: "0"
+    },
+    total_modal_ditempatkan: {
+      type: DataTypes.CHAR(15),
+      allowNull: false,
+      defaultValue: "0"
+    },
+    flag_umk: {
+      type: DataTypes.STRING(1),
+      allowNull: false,
+      defaultValue: ""
+    },
+    jenis_perubahan_terakhir: {
+      type: DataTypes.STRING(5),
+      allowNull: false,
+      defaultValue: ""
+    },
+    no_pengesahan: {
+      type: DataTypes.STRING(45),
+      allowNull: false,
+      defaultValue: ""
+    },
+    tgl_pengesahan: {
+      type: DataTypes.CHAR(10),
+      allowNull: true
     },
     tgl_insert: {
       type: DataTypes.DATE,
@@ -239,7 +243,7 @@ const Tr_oss_proyek = db.define(
     }
   }, {
   Sequelize,
-  tableName: 'tr_oss_proyek',
+  tableName: 'tr_oss_header',
   timestamps: false,
   indexes: [
     {
@@ -247,16 +251,10 @@ const Tr_oss_proyek = db.define(
       unique: true,
       using: "BTREE",
       fields: [
-        { name: "idpryk" },
+        { name: "idoss" },
       ]
     },
   ]
 });
 
-Tr_oss_proyek.belongsTo(Tb_skala_usaha_skp, {
-  foreignKey: 'skala_usaha',
-  targetKey: 'kode_skala',
-  as: 'skalaInfo'
-});
-
-export default Tr_oss_proyek;
+export default Tr_oss_header;

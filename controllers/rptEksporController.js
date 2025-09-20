@@ -1,4 +1,4 @@
-import Tr_report_ekspor from "../models/tr_report_ekspor.js";
+import Tr_report_ekspor from "../models/ekspor/tr_report_ekspor.js";
 import { Sequelize } from "sequelize";
 import ExcelJS from "exceljs";
 

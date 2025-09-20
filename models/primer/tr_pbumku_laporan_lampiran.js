@@ -1,16 +1,22 @@
 import { Sequelize } from "sequelize";
-import db_mutu from "../config/Database.js";
+import { db_mutu } from "../../config/Database.js";
+import e from "express";
+// import Tr_pbumku_laporan_file from "./tr_pbumku_laporan_file.js";
 
 const { DataTypes } = Sequelize;
 
-const Tr_pbumku_spt = db_mutu.define(
-  "tr_pbumku_spt",
+const Tr_pbumku_laporan_lampiran = db_mutu.define(
+  "tr_pbumku_laporan_lampiran",
   {
-    idspt: {
+    idlaplampiran: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
       allowNull: false,
       primaryKey: true
+    },
+    idlaphdr: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     },
     idoss: {
       type: DataTypes.INTEGER,
@@ -24,35 +30,27 @@ const Tr_pbumku_spt = db_mutu.define(
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    nib: {
-      type: DataTypes.STRING(13),
-      allowNull: true
-    },
-    nomor_spt: {
-      type: DataTypes.STRING(50),
-      allowNull: true
-    },
-    tanggal_spt: {
-      type: DataTypes.DATEONLY,
-      allowNull: true
-    },
-    kd_upt: {
-      type: DataTypes.STRING(10),
-      allowNull: true
-    },
     kbli: {
       type: DataTypes.STRING(5),
       allowNull: true
     },
-    nama_izin: {
+    nomor_referensi_teknis: {
       type: DataTypes.STRING(100),
       allowNull: true
     },
-    pejabat_ttd: {
+    komoditas: {
       type: DataTypes.STRING(255),
       allowNull: true
     },
-    jabtan_ttd: {
+    kategori: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    jenis_sediaan_obat: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+    peruntukan_produk: {
       type: DataTypes.STRING(255),
       allowNull: true
     },
@@ -66,7 +64,7 @@ const Tr_pbumku_spt = db_mutu.define(
     }
   }, {
     Sequelize,
-    tableName: 'tr_pbumku_spt',
+    tableName: 'tr_pbumku_laporan_lampiran',
     timestamps: false,
     indexes: [
       {
@@ -74,10 +72,10 @@ const Tr_pbumku_spt = db_mutu.define(
         unique: true,
         using: "BTREE",
         fields: [
-          { name: "idspt" },
+          { name: "idlaplampiran" },
         ]
       },
     ]
   });
 
-export default Tr_pbumku_spt;
+  export default Tr_pbumku_laporan_lampiran;

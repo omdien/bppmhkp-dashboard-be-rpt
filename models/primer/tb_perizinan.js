@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize";
-import db_mutu from "../config/Database.js";
+import db_mutu from "../../config/Database.js";
 import Tr_oss_checklist from "./tr_oss_checklist.js";  
 
 const { DataTypes } = Sequelize;
