@@ -23,10 +23,14 @@ app.use(cors({
 
 app.use(express.json());
 
+// untuk private
 app.use("/api/report/ekspor", verifyToken, rptEksporRoute);
 app.use("/api/report/primer", verifyToken, rptPrimerRoute);
 app.use("/api/report/skp", verifyToken, rptSKPRoute);
 app.use("/api/report/pnbp", verifyToken, rptPNBProute);
+
+// untuk public
+app.use("/api/report/public/primer", rptPrimerRoute);
 
 const PORT = process.env.PORT || 5005;
 app.listen(PORT, () => {

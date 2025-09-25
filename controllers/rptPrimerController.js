@@ -11,6 +11,7 @@ import ExcelJS from "exceljs";
 export const getTr_oss_checklist_propinsi_izin_tabel = async (req, res) => {
   try {
     const { tgl_awal, tgl_akhir } = req.query;
+    console.log(tgl_awal, tgl_akhir)
     const start = tgl_awal ? `${tgl_awal} 00:00:00` : '2024-01-01 00:00:00';
     const end = tgl_akhir ? `${tgl_akhir} 23:59:59` : '2024-12-31 23:59:59';
 
