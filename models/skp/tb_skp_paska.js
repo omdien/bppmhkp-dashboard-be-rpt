@@ -1,8 +1,8 @@
 // models/tb_skp_paska.js
 import { DataTypes } from "sequelize";
-import { db_mutu } from "../../config/Database.js";
+import { db_skp } from "../../config/Database.js";
 
-const TbSkpPaska = db_mutu.define(
+const TbSkpPaska = db_skp.define(
   "tb_skp_paska",
   {
     id: {
