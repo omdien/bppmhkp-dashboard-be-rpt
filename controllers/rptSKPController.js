@@ -166,11 +166,11 @@ export const get_rekap_provinsi = async (req, res) => {
 
     const result = await TbSkpPaska.findAll({
       attributes: [
-        "provinsi",
+        "provinsi_id","provinsi",
         [fn("COUNT", col("id")), "jumlah"],
       ],
       where: whereClause,
-      group: ["provinsi"],
+      group: ["provinsi_id","provinsi"],
       order: [[literal("jumlah"), "DESC"]],
       ...(limit ? { limit: parseInt(limit, 10) } : {}),
       raw: true,

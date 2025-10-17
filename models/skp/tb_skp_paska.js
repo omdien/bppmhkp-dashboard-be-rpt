@@ -18,7 +18,15 @@ const TbSkpPaska = db_mutu.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    provinsi_id: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     provinsi: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    regency_id: {
       type: DataTypes.STRING,
       allowNull: true,
     },
