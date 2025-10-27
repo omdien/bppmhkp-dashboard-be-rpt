@@ -120,6 +120,10 @@ const Tb_cbib_kapal = db_kapal.define(
     pj_pusat: {
       type: DataTypes.STRING(100),
       allowNull: true
+    },
+    kode_provinsi: {
+      type: DataTypes.STRING(2),
+      allowNull: true
     }
   }, {
     Sequelize,

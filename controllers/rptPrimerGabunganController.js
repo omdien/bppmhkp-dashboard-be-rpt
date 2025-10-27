@@ -1,9 +1,11 @@
 import ExcelJS from "exceljs";
-import { get_rekap_provinsi } from "./rptCBIBKapalController.js";
-import { db_mutu } from "../config/Database.js";
 import { Sequelize } from "sequelize";
+import { db_mutu, db_kapal } from "../config/Database.js";
 import Tb_propinsi from "../models/primer/tb_propinsi.js";
 
+/**
+ * Utility: Range tanggal default (tahun berjalan)
+ */
 const getDefaultRange = () => {
   const year = new Date().getFullYear();
   return {
@@ -12,108 +14,145 @@ const getDefaultRange = () => {
   };
 };
 
-export const getPivotGabungan = async (req, res) => {
+/**
+ * Ambil rekap CBIB Kapal per provinsi
+ */
+export const get_rekap_provinsi = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-
-    // --- 1. Range tanggal (default tahun berjalan)
     const { start: defStart, end: defEnd } = getDefaultRange();
     const start = startDate ? `${startDate} 00:00:00` : defStart;
     const end = endDate ? `${endDate} 23:59:59` : defEnd;
 
-    // --- 2. Ambil data OSS checklist ---
-    const queryOSS = `
+    const results = await db_kapal.query(
+      `
       SELECT 
-          LPAD(LEFT(oss.kd_daerah, 2), 2, '0') AS kode_propinsi,
-          izin.ur_izin_singkat,
-          COUNT(oss.idchecklist) AS jumlah
-      FROM tr_oss_checklist oss
-      LEFT JOIN tb_perizinan izin ON oss.kd_izin = izin.kd_izin
-      WHERE oss.sts_aktif = '1'
-        AND oss.status_checklist = '50'
-        AND oss.kd_izin != '032000000023'
-        AND oss.tgl_izin BETWEEN :start AND :end
-      GROUP BY kode_propinsi, izin.ur_izin_singkat
-    `;
-
-    const ossResults = await db_mutu.query(queryOSS, {
-      replacements: { start, end },
-      type: Sequelize.QueryTypes.SELECT,
-    });
-
-    // --- 3. Ambil data CBIB Kapal ---
-    const cbibResults = await new Promise((resolve) => {
-      get_rekap_provinsi(
-        { query: { startDate, endDate } },
-        {
-          status: () => ({
-            json: (d) => resolve(d),
-          }),
-        }
-      );
-    });
-
-    const cbibData = Array.isArray(cbibResults)
-      ? cbibResults
-      : cbibResults?.data || [];
-
-    // --- 4. Ambil daftar provinsi master ---
-    const propinsiList = await Tb_propinsi.findAll();
-    const propinsiMap = {};
-    propinsiList.forEach((p) => {
-      const kode = p.KODE_PROPINSI.toString().padStart(2, "0");
-      propinsiMap[kode] = p.URAIAN_PROPINSI.trim().toUpperCase();
-    });
-
-    // --- 5. Bentuk pivot awal dari master provinsi ---
-    const daftarIzin = ["CPPIB", "CPIB", "CPOIB", "CBIB_Kapal", "CDOIB", "CBIB"];
-    const pivotMap = {};
-
-    propinsiList.forEach((p) => {
-      const kode = p.KODE_PROPINSI.toString().padStart(2, "0");
-      const nama = p.URAIAN_PROPINSI.trim().toUpperCase();
-
-      pivotMap[nama] = {
-        kode_propinsi: kode,
-        propinsi: nama,
-        JUMLAH: 0,
-      };
-
-      daftarIzin.forEach((izin) => (pivotMap[nama][izin] = 0));
-    });
-
-    // --- 6. Masukkan data OSS ---
-    ossResults.forEach((row) => {
-      const kodePropinsi = row.kode_propinsi.padStart(2, "0");
-      const namaPropinsi = propinsiMap[kodePropinsi] || kodePropinsi;
-
-      if (daftarIzin.includes(row.ur_izin_singkat)) {
-        pivotMap[namaPropinsi][row.ur_izin_singkat] += row.jumlah;
-        pivotMap[namaPropinsi].JUMLAH += row.jumlah;
+        LPAD(kode_provinsi, 2, '0') AS kode_provinsi,
+        COUNT(*) AS jumlah
+      FROM tb_cbib_kapal
+      WHERE tgl_terbit BETWEEN :start AND :end
+      GROUP BY kode_provinsi
+      `,
+      {
+        replacements: { start, end },
+        type: Sequelize.QueryTypes.SELECT,
       }
-    });
-
-    // --- 7. Tambahkan data CBIB Kapal ---
-    cbibData.forEach((r) => {
-      const namaPropinsi = r.nama_provinsi?.trim().toUpperCase();
-      if (pivotMap[namaPropinsi]) {
-        pivotMap[namaPropinsi].CBIB_Kapal += r.jumlah;
-        pivotMap[namaPropinsi].JUMLAH += r.jumlah;
-      }
-    });
-
-    // --- 8. Sort hasil ---
-    const pivotArray = Object.values(pivotMap).sort(
-      (a, b) => b.JUMLAH - a.JUMLAH
     );
 
-    res.status(200).json(pivotArray);
+    res.status(200).json(results);
   } catch (error) {
-    console.error("Error fetching Pivot Gabungan:", error);
+    console.error("Error get_rekap_provinsi:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
+/**
+ * Utility internal untuk generate Pivot Gabungan (tanpa res)
+ */
+const buildPivotGabungan = async (start, end) => {
+  // --- 1. Ambil data OSS ---
+  const queryOSS = `
+    SELECT 
+        LPAD(LEFT(oss.kd_daerah, 2), 2, '0') AS kode_propinsi,
+        izin.ur_izin_singkat,
+        COUNT(oss.idchecklist) AS jumlah
+    FROM tr_oss_checklist oss
+    LEFT JOIN tb_perizinan izin ON oss.kd_izin = izin.kd_izin
+    WHERE oss.sts_aktif = '1'
+      AND oss.status_checklist = '50'
+      AND oss.kd_izin != '032000000023'
+      AND oss.tgl_izin BETWEEN :start AND :end
+    GROUP BY kode_propinsi, izin.ur_izin_singkat
+  `;
+
+  const ossResults = await db_mutu.query(queryOSS, {
+    replacements: { start, end },
+    type: Sequelize.QueryTypes.SELECT,
+  });
+
+  // --- 2. Ambil data CBIB Kapal ---
+  const cbibResults = await db_kapal.query(
+    `
+    SELECT 
+      LPAD(kode_provinsi, 2, '0') AS kode_provinsi,
+      COUNT(*) AS jumlah
+    FROM tb_cbib_kapal
+    WHERE tgl_terbit BETWEEN :start AND :end
+    GROUP BY kode_provinsi
+    `,
+    {
+      replacements: { start, end },
+      type: Sequelize.QueryTypes.SELECT,
+    }
+  );
+
+  // --- 3. Master provinsi ---
+  const propinsiList = await Tb_propinsi.findAll();
+  const propinsiMap = {};
+  propinsiList.forEach((p) => {
+    const kode = p.KODE_PROPINSI.toString().padStart(2, "0");
+    propinsiMap[kode] = p.URAIAN_PROPINSI.trim().toUpperCase();
+  });
+
+  // --- 4. Inisialisasi pivot ---
+  const daftarIzin = ["CPPIB", "CPIB", "CPOIB", "CBIB_Kapal", "CDOIB", "CBIB"];
+  const pivotMap = {};
+
+  propinsiList.forEach((p) => {
+    const kode = p.KODE_PROPINSI.toString().padStart(2, "0");
+    const nama = p.URAIAN_PROPINSI.trim().toUpperCase();
+    pivotMap[nama] = {
+      kode_propinsi: kode,
+      propinsi: nama,
+      JUMLAH: 0,
+    };
+    daftarIzin.forEach((izin) => (pivotMap[nama][izin] = 0));
+  });
+
+  // --- 5. Tambahkan data OSS ---
+  ossResults.forEach((row) => {
+    const kodePropinsi = row.kode_propinsi.padStart(2, "0");
+    const namaPropinsi = propinsiMap[kodePropinsi];
+    if (namaPropinsi && daftarIzin.includes(row.ur_izin_singkat)) {
+      pivotMap[namaPropinsi][row.ur_izin_singkat] += Number(row.jumlah || 0);
+      pivotMap[namaPropinsi].JUMLAH += Number(row.jumlah || 0);
+    }
+  });
+
+  // --- 6. Tambahkan CBIB Kapal ---
+  cbibResults.forEach((r) => {
+    const kodePropinsi = r.kode_provinsi?.toString().padStart(2, "0");
+    const namaPropinsi = propinsiMap[kodePropinsi];
+    if (namaPropinsi && pivotMap[namaPropinsi]) {
+      pivotMap[namaPropinsi].CBIB_Kapal += Number(r.jumlah || 0);
+      pivotMap[namaPropinsi].JUMLAH += Number(r.jumlah || 0);
+    }
+  });
+
+  return Object.values(pivotMap).sort((a, b) => b.JUMLAH - a.JUMLAH);
+};
+
+/**
+ * API: Get Pivot Gabungan
+ */
+export const getPivotGabungan = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const { start: defStart, end: defEnd } = getDefaultRange();
+    const start = startDate ? `${startDate} 00:00:00` : defStart;
+    const end = endDate ? `${endDate} 23:59:59` : defEnd;
+
+    const data = await buildPivotGabungan(start, end);
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Error getPivotGabungan:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * API: Export Pivot Gabungan ke Excel
+ */
 export const exportPivotGabunganExcel = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
@@ -121,89 +160,14 @@ export const exportPivotGabunganExcel = async (req, res) => {
     const start = startDate ? `${startDate} 00:00:00` : defStart;
     const end = endDate ? `${endDate} 23:59:59` : defEnd;
 
-    // --- Query sama seperti di atas ---
-    const queryOSS = `
-      SELECT 
-          LPAD(LEFT(oss.kd_daerah, 2), 2, '0') AS kode_propinsi,
-          izin.ur_izin_singkat,
-          COUNT(oss.idchecklist) AS jumlah
-      FROM tr_oss_checklist oss
-      LEFT JOIN tb_perizinan izin ON oss.kd_izin = izin.kd_izin
-      WHERE oss.sts_aktif = '1'
-        AND oss.status_checklist = '50'
-        AND oss.kd_izin != '032000000023'
-        AND oss.tgl_izin BETWEEN :start AND :end
-      GROUP BY kode_propinsi, izin.ur_izin_singkat
-    `;
+    // 🔥 Ambil langsung data pivot (tanpa fetch)
+    const pivotArray = await buildPivotGabungan(start, end);
 
-    const ossResults = await db_mutu.query(queryOSS, {
-      replacements: { start, end },
-      type: Sequelize.QueryTypes.SELECT,
-    });
-
-    const cbibResults = await new Promise((resolve) => {
-      get_rekap_provinsi(
-        { query: { startDate, endDate } },
-        {
-          status: () => ({
-            json: (d) => resolve(d),
-          }),
-        }
-      );
-    });
-
-    const cbibData = Array.isArray(cbibResults)
-      ? cbibResults
-      : cbibResults?.data || [];
-
-    const propinsiList = await Tb_propinsi.findAll();
-    const propinsiMap = {};
-    propinsiList.forEach((p) => {
-      const kode = p.KODE_PROPINSI.toString().padStart(2, "0");
-      propinsiMap[kode] = p.URAIAN_PROPINSI.trim().toUpperCase();
-    });
-
-    const daftarIzin = ["CPPIB", "CPIB", "CPOIB", "CBIB_Kapal", "CDOIB", "CBIB"];
-    const pivotMap = {};
-
-    propinsiList.forEach((p) => {
-      const kode = p.KODE_PROPINSI.toString().padStart(2, "0");
-      const nama = p.URAIAN_PROPINSI.trim().toUpperCase();
-
-      pivotMap[nama] = {
-        kode_propinsi: kode,
-        propinsi: nama,
-        JUMLAH: 0,
-      };
-
-      daftarIzin.forEach((izin) => (pivotMap[nama][izin] = 0));
-    });
-
-    ossResults.forEach((row) => {
-      const kodePropinsi = row.kode_propinsi.padStart(2, "0");
-      const namaPropinsi = propinsiMap[kodePropinsi] || kodePropinsi;
-
-      if (daftarIzin.includes(row.ur_izin_singkat)) {
-        pivotMap[namaPropinsi][row.ur_izin_singkat] += row.jumlah;
-        pivotMap[namaPropinsi].JUMLAH += row.jumlah;
-      }
-    });
-
-    cbibData.forEach((r) => {
-      const namaPropinsi = r.nama_provinsi?.trim().toUpperCase();
-      if (pivotMap[namaPropinsi]) {
-        pivotMap[namaPropinsi].CBIB_Kapal += r.jumlah;
-        pivotMap[namaPropinsi].JUMLAH += r.jumlah;
-      }
-    });
-
-    const pivotArray = Object.values(pivotMap).sort(
-      (a, b) => b.JUMLAH - a.JUMLAH
-    );
-
-    // --- Excel Export ---
+    // --- Siapkan file Excel ---
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Pivot Gabungan");
+
+    const daftarIzin = ["CPPIB", "CPIB", "CPOIB", "CBIB_Kapal", "CDOIB", "CBIB"];
     const header = ["Kode Provinsi", "Provinsi", ...daftarIzin, "JUMLAH"];
     sheet.addRow(header);
 
@@ -232,7 +196,7 @@ export const exportPivotGabunganExcel = async (req, res) => {
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
-    console.error("Error exporting Pivot Gabungan:", error);
+    console.error("Error exporting Pivot Gabungan Excel:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
