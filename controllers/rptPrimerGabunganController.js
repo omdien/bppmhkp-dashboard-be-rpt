@@ -15,11 +15,13 @@ const getDefaultRange = () => {
 export const getPivotGabungan = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    // --- 1️⃣ Range tanggal ---
-    const start = startDate ? `${startDate} 00:00:00` : "2024-01-01 00:00:00";
-    const end = endDate ? `${endDate} 23:59:59` : "2024-12-31 23:59:59";
 
-    // --- 2️⃣ Ambil data OSS checklist ---
+    // --- 1. Range tanggal (default tahun berjalan)
+    const { start: defStart, end: defEnd } = getDefaultRange();
+    const start = startDate ? `${startDate} 00:00:00` : defStart;
+    const end = endDate ? `${endDate} 23:59:59` : defEnd;
+
+    // --- 2. Ambil data OSS checklist ---
     const queryOSS = `
       SELECT 
           LPAD(LEFT(oss.kd_daerah, 2), 2, '0') AS kode_propinsi,
@@ -39,21 +41,23 @@ export const getPivotGabungan = async (req, res) => {
       type: Sequelize.QueryTypes.SELECT,
     });
 
-    // --- 3️⃣ Ambil data CBIB Kapal langsung dari DB report_kapal ---
-    const queryCBIBKapal = `
-      SELECT 
-          UPPER(nama_provinsi) AS nama_provinsi,
-          COUNT(DISTINCT id_cbib) AS jumlah
-      FROM tb_cbib_kapal
-      GROUP BY nama_provinsi
-      ORDER BY nama_provinsi
-    `;
-
-    const cbibData = await db_kapal.query(queryCBIBKapal, {
-      type: Sequelize.QueryTypes.SELECT,
+    // --- 3. Ambil data CBIB Kapal ---
+    const cbibResults = await new Promise((resolve) => {
+      get_rekap_provinsi(
+        { query: { startDate, endDate } },
+        {
+          status: () => ({
+            json: (d) => resolve(d),
+          }),
+        }
+      );
     });
 
-    // --- 4️⃣ Ambil daftar provinsi master ---
+    const cbibData = Array.isArray(cbibResults)
+      ? cbibResults
+      : cbibResults?.data || [];
+
+    // --- 4. Ambil daftar provinsi master ---
     const propinsiList = await Tb_propinsi.findAll();
     const propinsiMap = {};
     propinsiList.forEach((p) => {
@@ -61,7 +65,7 @@ export const getPivotGabungan = async (req, res) => {
       propinsiMap[kode] = p.URAIAN_PROPINSI.trim().toUpperCase();
     });
 
-    // --- 5️⃣ Bentuk struktur pivot awal dari master provinsi ---
+    // --- 5. Bentuk pivot awal dari master provinsi ---
     const daftarIzin = ["CPPIB", "CPIB", "CPOIB", "CBIB_Kapal", "CDOIB", "CBIB"];
     const pivotMap = {};
 
@@ -78,7 +82,7 @@ export const getPivotGabungan = async (req, res) => {
       daftarIzin.forEach((izin) => (pivotMap[nama][izin] = 0));
     });
 
-    // --- 6️⃣ Masukkan data OSS ke pivot ---
+    // --- 6. Masukkan data OSS ---
     ossResults.forEach((row) => {
       const kodePropinsi = row.kode_propinsi.padStart(2, "0");
       const namaPropinsi = propinsiMap[kodePropinsi] || kodePropinsi;
@@ -89,7 +93,7 @@ export const getPivotGabungan = async (req, res) => {
       }
     });
 
-    // --- 7️⃣ Tambahkan data CBIB Kapal dari report_kapal ---
+    // --- 7. Tambahkan data CBIB Kapal ---
     cbibData.forEach((r) => {
       const namaPropinsi = r.nama_provinsi?.trim().toUpperCase();
       if (pivotMap[namaPropinsi]) {
@@ -98,7 +102,7 @@ export const getPivotGabungan = async (req, res) => {
       }
     });
 
-    // --- 8️⃣ Urutkan hasil berdasarkan jumlah total ---
+    // --- 8. Sort hasil ---
     const pivotArray = Object.values(pivotMap).sort(
       (a, b) => b.JUMLAH - a.JUMLAH
     );
