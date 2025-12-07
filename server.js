@@ -6,6 +6,7 @@ import rptPrimerRoute from "./routes/report-primer.js";
 import rptSKPRoute from "./routes/report-skp.js";
 import rptPNBProute from "./routes/report-pnbp.js";
 import rptCBIBKapal from "./routes/report-cbib-kapal.js"
+import rptLapPNBP from "./routes/pnbp/lapPnbpRoutes.js";
 import { verifyToken } from "./middleware/auth.js";
 import cookieParser from "cookie-parser";
 
@@ -30,6 +31,7 @@ app.use("/api/report/primer", verifyToken, rptPrimerRoute);
 app.use("/api/report/skp", verifyToken, rptSKPRoute);
 app.use("/api/report/pnbp", verifyToken, rptPNBProute);
 app.use("/api/report/cbibkapal",verifyToken, rptCBIBKapal);
+app.use("/api/report/lap-pnbp", rptLapPNBP);
 
 
 // untuk public
