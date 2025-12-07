@@ -3,7 +3,7 @@ import { Op } from "sequelize";
 
 class LapPnbpRepository {
 
-  async getFiltered(filters) {
+  async getFiltered(filters, page, limit) {
     const where = {};
 
     if (filters.startDate && filters.endDate) {
@@ -20,7 +20,9 @@ class LapPnbpRepository {
       where.kd_tarif = filters.kd_tarif;
     }
 
-    return await V_Lap_Pnbp.findAll({
+    const offset = (page - 1) * limit;
+
+    const { rows, count } = await V_Lap_Pnbp.findAndCountAll({
       attributes: [
         "nomor_aju",
         "nm_pendek",
@@ -37,8 +39,19 @@ class LapPnbpRepository {
         "total_tarif",
         "pp"
       ],
-      where
+      where,
+      limit,
+      offset,
+      order: [["nomor_aju", "ASC"]],
     });
+
+    return {
+      data: rows,
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit),
+    };
   }
 
 }
