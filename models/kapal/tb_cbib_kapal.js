@@ -14,7 +14,7 @@ const Tb_cbib_kapal = db_kapal.define(
       primaryKey: true
     },
     no_cbib: {
-      type: DataTypes.STRING(10),
+      type: DataTypes.STRING(20),
       allowNull: true
     },
     nama_kapal: {
@@ -37,7 +37,19 @@ const Tb_cbib_kapal = db_kapal.define(
       type: DataTypes.STRING(50),
       allowNull: true
     },
-    tgl_inspeksi: {
+    tgl_permohonan: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    tgl_spt: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    tgl_awal_inspeksi: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    tgl_akhir_inspeksi: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
@@ -69,8 +81,16 @@ const Tb_cbib_kapal = db_kapal.define(
       type: DataTypes.STRING(150),
       allowNull: true
     },
+    kode_provinsi: {
+      type: DataTypes.STRING(2),
+      allowNull: true
+    },
     nama_provinsi: {
       type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    status_pemasok: {
+      type: DataTypes.STRING(10),
       allowNull: true
     },
     nama_pemilik: {
@@ -119,10 +139,6 @@ const Tb_cbib_kapal = db_kapal.define(
     },
     pj_pusat: {
       type: DataTypes.STRING(100),
-      allowNull: true
-    },
-    kode_provinsi: {
-      type: DataTypes.STRING(2),
       allowNull: true
     }
   }, {
