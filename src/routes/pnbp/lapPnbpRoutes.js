@@ -1,6 +1,6 @@
 import express from "express";
 import LapPnbpController from "../../controllers/pnbp/LapPnbpController.js";
-import { validateLapPnbp } from "../../validation/pnbp/LapPnbpValidation.js";
+import { validateLapPnbp } from "../../validation/pnbp/lapPnbpValidation.js";
 import { validateRequest } from "../../middleware/validateRequest.js";
 
 const router = express.Router();
