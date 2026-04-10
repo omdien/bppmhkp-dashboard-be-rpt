@@ -18,6 +18,6 @@ router.get("/propinsi-izin", getTr_oss_checklist_propinsi_izin_tabel);
 router.get("/export-propinsi-izin", exportPivotGabunganExcel);
 router.get("/rincian-report", get_rincian_report_primer);
 router.get("/export-rincian-report", export_rincian_report_primer);
-router.get("/pivot-propinsi-izin", getPivotGabungan)
+// router.get("/pivot-propinsi-izin", getPivotGabungan)
 
 export default router;

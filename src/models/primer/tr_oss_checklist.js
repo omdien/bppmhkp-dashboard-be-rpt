@@ -5,6 +5,7 @@ import V_oss_header from "./v_oss_header.js";
 import Tr_pbumku_laporan_header from "./tr_pbumku_laporan_header.js";
 import Tr_pbumku_laporan_lampiran from "./tr_pbumku_laporan_lampiran.js";
 import Tr_pbumku_laporan_file from "./tr_pbumku_laporan_file.js";
+import Tr_oss_proyek from "./tr_oss_proyek.js"; // Import model proyek
 
 const { DataTypes } = Sequelize;
 
@@ -12,6 +13,7 @@ const Tr_oss_checklist = db_mutu.define(
   "tr_oss_checklist",
   {
     idchecklist: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+    id_proyek: { type: DataTypes.STRING(25), allowNull: true },
     kd_daerah: { type: DataTypes.STRING(10), allowNull: false, defaultValue: "" },
     kd_izin: { type: DataTypes.STRING(12), allowNull: false, defaultValue: "" },
     tgl_izin: { type: DataTypes.STRING(10), allowNull: true },
@@ -48,6 +50,12 @@ Tr_oss_checklist.belongsTo(Tr_pbumku_laporan_lampiran, {
 Tr_oss_checklist.belongsTo(Tr_pbumku_laporan_header, {
   foreignKey: "idchecklist",
   targetKey: "idchecklist",
+});
+
+Tr_oss_checklist.belongsTo(Tr_oss_proyek, {
+  foreignKey: "id_proyek", // kolom di tr_oss_checklist
+  targetKey: "id_proyek",  // kolom di tr_oss_proyek
+  as: "v_oss_proyek",
 });
 
 export default Tr_oss_checklist;

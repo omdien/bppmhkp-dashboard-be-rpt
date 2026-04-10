@@ -9,6 +9,8 @@ import rptSKPRoute from "./routes/report-skp.js";
 import rptPNBProute from "./routes/report-pnbp.js";
 import rptCBIBKapal from "./routes/report-cbib-kapal.js";
 import rptLapPNBProute from "./routes/pnbp/lapPnbpRoutes.js";
+import rptPrimerRoute2 from "./routes/primer/reportPrimerRoutes.js";
+import rptPrimerGabunganRoute from "./routes/primer/reportPrimerGabunganRoutes.js";
 
 // middleware
 import { verifyToken } from "./middleware/auth.js";
@@ -39,6 +41,8 @@ app.use("/api/report/skp", verifyToken, rptSKPRoute);
 app.use("/api/report/pnbp", verifyToken, rptPNBProute);
 app.use("/api/report/cbibkapal", verifyToken, rptCBIBKapal);
 app.use("/api/report/lap-pnbp", rptLapPNBProute);
+app.use("/api/report/rincian-primer", rptPrimerRoute2);
+app.use("/api/report/gabungan-primer", rptPrimerGabunganRoute);
 
 // 🌐 Public route
 app.use("/api/report/public/primer", rptPrimerRoute);
