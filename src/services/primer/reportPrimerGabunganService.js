@@ -31,7 +31,7 @@ export const getPivotGabunganService = async (start, end) => {
             CPPIB: 0,
             CPIB: 0,
             CPOIB: 0,
-            'CPIB Kapal': 0,
+            CPIB_Kapal: 0,
             CDOIB: 0,
             CBIB: 0
         };
@@ -51,12 +51,12 @@ export const getPivotGabunganService = async (start, end) => {
 
     // 2. Masukkan Data Kapal (293 Jatim ada di sini)
     kapalResults.forEach((row) => {
-        // Pastikan kode_provinsi jadi string 2 digit (misal '35')
         const kode = String(row.kode_provinsi).padStart(2, '0');
         const namaPropinsi = propinsiMap[kode];
         
         if (namaPropinsi) {
-            pivotMap[namaPropinsi]['CPIB Kapal'] += Number(row.jumlah || 0);
+            // ✅ UBAH: Gunakan CPIB_Kapal (underscore) agar match dengan inisialisasi & frontend
+            pivotMap[namaPropinsi].CPIB_Kapal += Number(row.jumlah || 0);
             pivotMap[namaPropinsi].JUMLAH += Number(row.jumlah || 0);
         }
     });
