@@ -123,39 +123,64 @@ export const fetchReportPrimerData = async (filters, offset, limit) => {
     return { totalRecords, rows };
 };
 
-export const fetchAllReportPrimerData = async (filters) => {
+// export const fetchAllReportPrimerData = async (filters) => {
+//     const Op = Sequelize.Op;
+//     const whereConditions = {
+//         [Op.and]: [
+//             { sts_aktif: "1" },
+//             { kd_izin: { [Op.ne]: '032000000023' } },
+//             { tgl_izin: { [Op.between]: [filters.tgl_awal, filters.tgl_akhir] } }
+//         ]
+//     };
+
+//     if (filters.status_checklist) whereConditions[Op.and].push({ status_checklist: filters.status_checklist });
+//     if (filters.kd_izin) whereConditions[Op.and].push({ kd_izin: filters.kd_izin });
+//     if (filters.kd_daerah_prefix) {
+//         whereConditions[Op.and].push({ kd_daerah: { [Op.like]: `${filters.kd_daerah_prefix}%` } });
+//     }
+
+//     return await Tr_oss_checklist.findAll({
+//         where: whereConditions,
+//         attributes: [
+//             "idchecklist", "tgl_izin", "id_izin", "jenis_izin", "kd_izin", "kd_daerah",
+//             "nama_izin", "no_izin", "nib", "tgl_permohonan", "status_checklist", "sts_aktif", "id_proyek"
+//         ],
+//         include: [
+//             { model: V_oss_header, as: 'v_oss_header', required: false },
+//             { model: Tr_oss_proyek, as: 'v_oss_proyek', attributes: ["kbli", "uraian_usaha"], required: false },
+//             { model: Tr_pbumku_laporan_lampiran, as: 'tr_pbumku_laporan_lampiran', required: false },
+//             {
+//                 model: Tr_pbumku_laporan_header,
+//                 as: 'tb_pbumku_laporan_header',
+//                 required: false,
+//                 include: [{ model: Tr_pbumku_laporan_file, as: 'tb_pbumku_laporan_file', required: false }]
+//             }
+//         ],
+//         order: [['tgl_izin', 'ASC']]
+//     });
+// };
+
+export const fetchAllReportPrimerExport = async (filters) => {
     const Op = Sequelize.Op;
+    const { tgl_awal, tgl_akhir, status_checklist, kd_izin, kd_daerah_prefix } = filters;
+
     const whereConditions = {
         [Op.and]: [
             { sts_aktif: "1" },
             { kd_izin: { [Op.ne]: '032000000023' } },
-            { tgl_izin: { [Op.between]: [filters.tgl_awal, filters.tgl_akhir] } }
+            { tgl_izin: { [Op.between]: [tgl_awal, tgl_akhir] } }
         ]
     };
 
-    if (filters.status_checklist) whereConditions[Op.and].push({ status_checklist: filters.status_checklist });
-    if (filters.kd_izin) whereConditions[Op.and].push({ kd_izin: filters.kd_izin });
-    if (filters.kd_daerah_prefix) {
-        whereConditions[Op.and].push({ kd_daerah: { [Op.like]: `${filters.kd_daerah_prefix}%` } });
+    if (status_checklist) whereConditions[Op.and].push({ status_checklist });
+    if (kd_izin) whereConditions[Op.and].push({ kd_izin });
+    if (kd_daerah_prefix) {
+        whereConditions[Op.and].push({ kd_daerah: { [Op.like]: `${kd_daerah_prefix}%` } });
     }
 
-    return await Tr_oss_checklist.findAll({
+    return await ReportPrimer.findAll({
         where: whereConditions,
-        attributes: [
-            "idchecklist", "tgl_izin", "id_izin", "jenis_izin", "kd_izin", "kd_daerah",
-            "nama_izin", "no_izin", "nib", "tgl_permohonan", "status_checklist", "sts_aktif", "id_proyek"
-        ],
-        include: [
-            { model: V_oss_header, as: 'v_oss_header', required: false },
-            { model: Tr_oss_proyek, as: 'v_oss_proyek', attributes: ["kbli", "uraian_usaha"], required: false },
-            { model: Tr_pbumku_laporan_lampiran, as: 'tr_pbumku_laporan_lampiran', required: false },
-            {
-                model: Tr_pbumku_laporan_header,
-                as: 'tb_pbumku_laporan_header',
-                required: false,
-                include: [{ model: Tr_pbumku_laporan_file, as: 'tb_pbumku_laporan_file', required: false }]
-            }
-        ],
-        order: [['tgl_izin', 'ASC']]
+        order: [['tgl_izin', 'ASC']],
+        raw: true // Lebih ringan karena hanya mengambil data mentah untuk export
     });
 };

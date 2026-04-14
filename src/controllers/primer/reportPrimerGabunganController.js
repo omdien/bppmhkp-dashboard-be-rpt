@@ -44,7 +44,7 @@ export const exportPivotGabunganExcel = async (req, res) => {
         const workbook = new ExcelJS.Workbook();
         const sheet = workbook.addWorksheet("Pivot Gabungan");
 
-        const daftarIzin = ["CPPIB", "CPIB", "CPOIB", "CBIB_Kapal", "CDOIB", "CBIB"];
+        const daftarIzin = ["CPPIB", "CPIB", "CPOIB", "CPIB_Kapal", "CDOIB", "CBIB"];
         sheet.addRow(["Kode Provinsi", "Provinsi", ...daftarIzin, "JUMLAH"]);
 
         pivotArray.forEach((row) => {

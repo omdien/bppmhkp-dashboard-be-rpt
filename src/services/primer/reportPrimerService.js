@@ -110,72 +110,42 @@ export const getRincianReportService = async (queryParams) => {
 };
 
 export const getExportRincianService = async (filters) => {
-    const rows = await reportRepository.fetchAllReportPrimerData(filters);
+    // Panggil fungsi baru di repository
+    const rows = await reportRepository.fetchAllReportPrimerExport(filters);
 
-    const propinsiList = await Tb_propinsi.findAll({ attributes: ['KODE_PROPINSI', 'URAIAN_PROPINSI'], raw: true });
-    const propinsiMap = propinsiList.reduce((acc, curr) => {
-        acc[curr.KODE_PROPINSI] = curr.URAIAN_PROPINSI;
-        return acc;
-    }, {});
-
-    // --- KUNCI UTAMA DI SINI ---
-    const uniqueMap = new Map();
-
-    rows.forEach(item => {
-        const data = item.get({ plain: true });
-        const idCheck = data.idchecklist;
-
-        // Jika idchecklist sudah pernah masuk, abaikan baris berikutnya (duplikat)
-        if (!uniqueMap.has(idCheck)) {
-            const v_oss = data.v_oss_header || {};
-            const proyek = data.v_oss_proyek || {};
-            const lampiran = data.tr_pbumku_laporan_lampiran || {};
-            const header = data.tb_pbumku_laporan_header || {};
-            const file = header.tb_pbumku_laporan_file || {};
-
-            const kodeProp = data.kd_daerah ? data.kd_daerah.substring(0, 2) : null;
-
-            uniqueMap.set(idCheck, {
-                idchecklist: data.idchecklist,
-                tgl_izin: data.tgl_izin,
-                id_izin: data.id_izin,
-                jenis_izin: data.jenis_izin,
-                kd_izin: data.kd_izin,
-                kd_daerah: data.kd_daerah,
-                nama_izin: data.nama_izin,
-                no_izin: data.no_izin,
-                nib: data.nib,
-                tgl_permohonan: data.tgl_permohonan,
-                status_checklist: data.status_checklist,
-                sts_aktif: data.sts_aktif,
-
-                komoditas: lampiran.komoditas || "-",
-                no_referensi: lampiran.nomor_referensi_teknis || "-",
-                uraian_propinsi: propinsiMap[kodeProp] || "Tidak Diketahui",
-
-                kbli: proyek.kbli || "-",
-                uraian_usaha: proyek.uraian_usaha || "-",
-
-                npwp_perseroan: v_oss.npwp_perseroan || "-",
-                nama_perseroan: v_oss.nama_perseroan || "-",
-                alamat_perseroan: v_oss.alamat_perseroan || "-",
-                rt_rw_perseroan: v_oss.rt_rw_perseroan || "-",
-                kelurahan_perseroan: v_oss.kelurahan_perseroan || "-",
-                perseroan_daerah_id: v_oss.perseroan_daerah_id || "-",
-                kode_pos_perseroan: v_oss.kode_pos_perseroan || "-",
-                nomor_telpon_perseroan: v_oss.nomor_telpon_perseroan || "-",
-                email_perusahaan: v_oss.email_perusahaan || "-",
-
-                total_sesuai: file.total_sesuai || "0",
-                total_minor: file.total_minor || "0",
-                total_mayor: file.total_mayor || "0",
-                total_kritis: file.total_kritis || "0",
-                total_hasil: file.total_hasil || "-",
-                keterangan: file.keterangan || "-"
-            });
-        }
-    });
-
-    // Mengubah Map kembali menjadi Array
-    return Array.from(uniqueMap.values());
+    // Mapping ulang untuk memastikan urutan kolom dan handling nilai null
+    return rows.map(row => ({
+        idchecklist: row.idchecklist,
+        tgl_izin: row.tgl_izin,
+        id_izin: row.id_izin,
+        jenis_izin: row.jenis_izin,
+        kd_izin: row.kd_izin,
+        kd_daerah: row.kd_daerah,
+        nama_izin: row.nama_izin,
+        no_izin: row.no_izin,
+        nib: row.nib,
+        tgl_permohonan: row.tgl_permohonan,
+        status_checklist: row.status_checklist,
+        sts_aktif: row.sts_aktif,
+        komoditas: row.komoditas || "-",
+        no_referensi: row.no_referensi || "-",
+        uraian_propinsi: row.uraian_propinsi || "-",
+        kbli: row.kbli || "-",
+        uraian_usaha: row.uraian_usaha || "-",
+        npwp_perseroan: row.npwp_perseroan || "-",
+        nama_perseroan: row.nama_perseroan || "-",
+        alamat_perseroan: row.alamat_perseroan || "-",
+        rt_rw_perseroan: row.rt_rw_perseroan || "-",
+        kelurahan_perseroan: row.kelurahan_perseroan || "-",
+        perseroan_daerah_id: row.perseroan_daerah_id || "-",
+        kode_pos_perseroan: row.kode_pos_perseroan || "-",
+        nomor_telpon_perseroan: row.nomor_telpon_perseroan || "-",
+        email_perusahaan: row.email_perusahaan || "-",
+        total_sesuai: row.total_sesuai || "0",
+        total_minor: row.total_minor || "0",
+        total_mayor: row.total_mayor || "0",
+        total_kritis: row.total_kritis || "0",
+        total_hasil: row.total_hasil || "-",
+        keterangan: row.keterangan || "-"
+    }));
 };
