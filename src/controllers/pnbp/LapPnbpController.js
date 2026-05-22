@@ -2,7 +2,7 @@ import LapPnbpService from "../../services/pnbp/LapPnbpService.js";
 import ExcelJS from "exceljs";
 
 class LapPnbpController {
-  
+
   async getLaporan(req, res) {
     try {
       const { data, total, page, limit, totalPages } =
@@ -12,12 +12,7 @@ class LapPnbpController {
         success: true,
         message: "Data laporan PNBP berhasil diambil",
         data,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages,
-        },
+        pagination: { page, limit, total, totalPages },
       });
 
     } catch (error) {
@@ -28,72 +23,56 @@ class LapPnbpController {
     }
   }
 
-  /**
-   * EXPORT TO EXCEL
-   */
   async exportExcel(req, res) {
     try {
-      // ambil semua data (tanpa pagination)
       const rows = await LapPnbpService.getLaporanForExport(req.query);
 
-      // Buat workbook
-      const workbook = new ExcelJS.Workbook();
+      const workbook  = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Laporan PNBP");
 
-      // Header kolom
       worksheet.columns = [
-        { header: "Nomor Aju", key: "nomor_aju", width: 20 },
-        { header: "Nama Pendek", key: "nm_pendek", width: 20 },
-        { header: "Pengirim", key: "nm_pengirim", width: 25 },
-        { header: "Ekspor", key: "ekspor", width: 10 },
-        { header: "Negara", key: "uraian_negara", width: 20 },
-        { header: "No. PNBP", key: "no_pnbp", width: 15 },
-        { header: "Tgl PNBP", key: "tgl_pnbp", width: 15 },
-        { header: "Kode Tarif", key: "kd_tarif", width: 15 },
-        { header: "Nama Tarif", key: "nm_tarif", width: 25 },
-        { header: "Volume", key: "volume", width: 10 },
-        { header: "Satuan", key: "satuan", width: 10 },
-        { header: "Tarif", key: "tarif", width: 12 },
-        { header: "Total Tarif", key: "total_tarif", width: 15 },
-        { header: "PP", key: "pp", width: 10 },
+        { header: "Nomor Aju",   key: "nomor_aju",     width: 22 },
+        { header: "Kode UPT",    key: "kd_unit",       width: 12 }, // ✅ ditambahkan
+        { header: "Nama Pendek", key: "nm_pendek",     width: 20 },
+        { header: "Pengirim",    key: "nm_pengirim",   width: 25 },
+        { header: "Jenis",       key: "jenis",         width: 10 }, // ✅ fix: ekspor→jenis
+        { header: "Negara",      key: "uraian_negara", width: 20 },
+        { header: "No. PNBP",   key: "no_pnbp",       width: 18 },
+        { header: "Tgl PNBP",   key: "tgl_pnbp",      width: 15 },
+        { header: "No. Bill",    key: "no_bill",       width: 18 }, // ✅ ditambahkan
+        { header: "Kode Tarif",  key: "kd_tarif",      width: 15 },
+        { header: "Nama Tarif",  key: "nm_tarif",      width: 25 },
+        { header: "Volume",      key: "volume",        width: 10 },
+        { header: "Satuan",      key: "satuan",        width: 10 },
+        { header: "Tarif",       key: "tarif",         width: 14 },
+        { header: "Total Tarif", key: "total_tarif",   width: 16 },
+        { header: "PP",          key: "pp",            width: 10 },
+        { header: "Status",      key: "status",        width: 12 }, // ✅ ditambahkan
       ];
 
-      // Tambahkan rows
-      rows.forEach((row) => {
-        worksheet.addRow({
-          nomor_aju: row.nomor_aju,
-          nm_pendek: row.nm_pendek,
-          nm_pengirim: row.nm_pengirim,
-          ekspor: row.ekspor,
-          uraian_negara: row.uraian_negara,
-          no_pnbp: row.no_pnbp,
-          tgl_pnbp: row.tgl_pnbp,
-          kd_tarif: row.kd_tarif,
-          nm_tarif: row.nm_tarif,
-          volume: row.volume,
-          satuan: row.satuan,
-          tarif: row.tarif,
-          total_tarif: row.total_tarif,
-          pp: row.pp,
-        });
-      });
+      // ✅ Gunakan addRow langsung dari dataValues agar tidak mapping manual
+      rows.forEach((row) => worksheet.addRow(row.dataValues));
 
-      // Styling header tebal
-      worksheet.getRow(1).eachCell((cell) => {
+      // Styling header
+      const headerRow = worksheet.getRow(1);
+      headerRow.eachCell((cell) => {
         cell.font = { bold: true };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFD9E1F2" }, // ✅ warna biru muda
+        };
+        cell.alignment = { horizontal: "center" };
       });
+      headerRow.commit();
 
-      // nama file
       const fileName = `laporan_pnbp_${Date.now()}.xlsx`;
-
-      // Header agar browser download file
       res.setHeader(
         "Content-Type",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       );
-      res.setHeader("Content-Disposition", `attachment; filename=${fileName}`);
+      res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
 
-      // Kirim file
       await workbook.xlsx.write(res);
       res.end();
 

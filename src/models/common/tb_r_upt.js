@@ -48,6 +48,14 @@ const Tb_r_upt = db_hc.define(
     KOTA: {
       type: DataTypes.STRING(50),
       allowNull: true
+    },
+    NM_UNIT_BARU: {
+      type: DataTypes.STRING(150),
+      allowNull: true
+    },
+    NM_PENDEK_BARU: {
+      type: DataTypes.STRING(100),
+      allowNull: true
     }
   }, {
   Sequelize,

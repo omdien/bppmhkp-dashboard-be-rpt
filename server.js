@@ -6,5 +6,5 @@ dotenv.config();
 const PORT = process.env.PORT || 5005;
 
 app.listen(PORT, () => {
-  console.log(`Dashboard service running on port ${PORT}`);
+  console.log(`Report service running on port ${PORT}`);
 });
